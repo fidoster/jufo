@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>JUFO Quick Check</title>
 
-  <!-- Optionally load Lora from Google Fonts: -->
-  <!-- <link href="https://fonts.googleapis.com/css?family=Lora:400,600&display=swap" rel="stylesheet"> -->
+  <!-- Load Lora from Google Fonts for entire extension UI -->
+  <link href="https://fonts.googleapis.com/css?family=Lora:400,600&display=swap" rel="stylesheet">
 
   <style>
     /* Base reset */
@@ -16,9 +16,9 @@
       padding: 0;
     }
 
+    /* Use Lora for everything */
     body {
-      /* Overall app font */
-      font-family: "Nunito", Arial, sans-serif;
+      font-family: "Lora", serif;
       background: linear-gradient(135deg, #f0f0f0, #ffffff);
       margin: 0;
       padding: 0;
@@ -139,11 +139,6 @@
     /* Results container */
     #results {
       margin-top: 10px;
-    }
-
-    /* Apply the Lora font to results area */
-    #resultsContainer {
-      font-family: "Lora", serif; /* <- Lora font here */
     }
 
     .result-item {

@@ -63,8 +63,8 @@ async function tryQueriesInSequence(query) {
 }
 
 /********************************************************
- * 3) After search, we fetch the 'kanava/<Jufo_ID>' details
- *    for each item so we have Name and Level.
+ * 3) After search, fetch the 'kanava/<Jufo_ID>' details
+ *    for each item so we have Name and numeric Level.
  ********************************************************/
 async function augmentSearchResult(item) {
   if (!item.Jufo_ID) return item;
@@ -76,8 +76,12 @@ async function augmentSearchResult(item) {
 
     const detailJson = await resp.json();
     if (Array.isArray(detailJson) && detailJson.length > 0) {
-      item.Level = detailJson[0].Level;
-      item.Name = detailJson[0].Name;
+      const rawLevel = detailJson[0].Level;
+      const numericLevel = parseInt(rawLevel, 10);
+
+      // If parseInt is NaN, store Level as null
+      item.Level = isNaN(numericLevel) ? null : numericLevel;
+      item.Name = detailJson[0].Name || "";
     }
     return item;
   } catch {
@@ -95,16 +99,15 @@ function renderAllResults(filterLevel = null) {
 
   let filteredItems = cachedSearchResults;
 
-  // "2 & 3" combined filter
+  // "2 & 3" combined
   if (filterLevel === "2_3") {
-    filteredItems = cachedSearchResults.filter(
+    filteredItems = filteredItems.filter(
       (it) => it.Level === 2 || it.Level === 3
     );
-  } else if (filterLevel !== null) {
-    // normal numeric level (0,1,2,3,...)
-    filteredItems = cachedSearchResults.filter(
-      (it) => it.Level === filterLevel
-    );
+  }
+  // if a numeric filter
+  else if (filterLevel !== null) {
+    filteredItems = filteredItems.filter((it) => it.Level === filterLevel);
   }
 
   if (!filteredItems.length) {
@@ -116,7 +119,7 @@ function renderAllResults(filterLevel = null) {
   const htmlPieces = filteredItems.map((item) => {
     const jufoID = item.Jufo_ID || "";
     const level = item.Level != null ? item.Level : "N/A";
-    const name = item.Name || item.Title || item.Nimi || "Unknown";
+    const name = item.Name || "Unknown";
 
     return `
       <div class="result-item">
@@ -136,16 +139,19 @@ function renderAllResults(filterLevel = null) {
 
 /********************************************************
  * 5) RENDERING: Create level filter buttons
- *    (All, 2 & 3, then each numeric level)
+ *    (All, "2&3", then each numeric level)
  ********************************************************/
 function renderLevelFilters() {
   const filterContainer = document.getElementById("levelFilters");
   filterContainer.innerHTML = "";
 
-  // Gather unique numeric levels
+  // Gather unique numeric levels only
   const levels = [
     ...new Set(
-      cachedSearchResults.map((r) => r.Level).filter((l) => l != null)
+      cachedSearchResults
+        .map((r) => r.Level)
+        // keep only real numbers (not null, not undefined, not NaN)
+        .filter((l) => typeof l === "number")
     ),
   ];
 
@@ -167,18 +173,18 @@ function renderLevelFilters() {
   showAllBtn.onclick = () => renderAllResults(null);
   filterContainer.appendChild(showAllBtn);
 
-  // Combined 2 & 3 if they exist
+  // If we have 2 or 3
   if (levels.includes(2) || levels.includes(3)) {
     const combBtn = document.createElement("button");
-    combBtn.textContent = "2 & 3";
+    combBtn.textContent = "2&3";
     combBtn.onclick = () => renderAllResults("2_3");
     filterContainer.appendChild(combBtn);
   }
 
-  // One button per unique level (0,1,2,3,...)
+  // One button per unique level
   levels.forEach((level) => {
     const btn = document.createElement("button");
-    btn.textContent = `${level}`;
+    btn.textContent = String(level);
     btn.onclick = () => renderAllResults(level);
     filterContainer.appendChild(btn);
   });
@@ -192,7 +198,7 @@ function exportToCSV() {
     alert("No results to export!");
     return;
   }
-  // Columns: "Jufo_ID,Name,Level"
+
   let csvContent = "Jufo_ID,Name,Level\n";
   for (const item of cachedSearchResults) {
     const jufoID = item.Jufo_ID || "";
@@ -215,10 +221,7 @@ function exportToCSV() {
 }
 
 /********************************************************
- * 7) After final search results:
- *    - For each item, fetch detail => store Name, Level
- *    - Then store globally
- *    - Render filter buttons + show "Export CSV" + results
+ * 7) PROCESS SEARCH RESULTS
  ********************************************************/
 async function processSearchResults(resultsArray) {
   const augmented = await Promise.all(resultsArray.map(augmentSearchResult));
@@ -226,7 +229,8 @@ async function processSearchResults(resultsArray) {
 
   // Build level filter buttons
   renderLevelFilters();
-  // Display all items by default
+
+  // Show all by default
   renderAllResults(null);
 
   // Show the "Export CSV" button
@@ -253,7 +257,6 @@ async function initiateSearch(query) {
     if (!data) {
       throw new Error("No results found");
     }
-    // Fetch details for each item
     await processSearchResults(data);
   } catch (error) {
     document.getElementById("error").innerText =
@@ -276,7 +279,10 @@ async function doJufoSearch() {
     });
 
     chrome.scripting.executeScript(
-      { target: { tabId: tab.id }, func: getSelection },
+      {
+        target: { tabId: tab.id },
+        func: getSelection,
+      },
       async (results) => {
         const selected = ((results && results[0].result) || "").trim();
         if (selected.length > 0) {
@@ -310,15 +316,15 @@ async function manualSearch() {
  * 11) On popup load
  ********************************************************/
 document.addEventListener("DOMContentLoaded", () => {
-  // Try auto-search for selected text
+  // Attempt auto-search from selected text
   doJufoSearch();
 
-  // Manual search event
+  // Manual search button
   document
     .getElementById("searchButton")
     .addEventListener("click", manualSearch);
 
-  // **ENTER KEY** triggers the same manualSearch()
+  // Press Enter => manualSearch()
   document.getElementById("searchInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       manualSearch();
