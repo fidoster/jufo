@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JUFO Portal Search</title>
+  <style>
+    .main {
+      min-height: 150px;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .header {
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    #selected {
+      font-weight: bold;
+      color: #333;
+    }
+
+    #error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    img {
+      width: 30px;
+    }
+
+    .hide {
+      display: none;
+    }
+
+    #results {
+      margin-top: 10px;
+    }
+
+    .result-item {
+      padding: 10px;
+      border: 1px solid #ddd;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+
+    .result-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    #manualInputContainer,
+    #filterContainer {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    #manualInput {
+      flex-grow: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    #manualSearchButton,
+    #exportButton {
+      padding: 0.5rem 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    #manualSearchButton:hover,
+    #exportButton:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div class="header">Highlighted Text:</div>
+    <div id="selected"></div>
+    <img id="spinner" src="spinner.gif" class="hide" />
+
+    <div id="results" class="hide">
+      <div class="header">Results:</div>
+      <div id="resultsContainer"></div>
+      <button id="exportButton">Export Results to CSV</button>
+    </div>
+
+    <div id="error"></div>
+
+    <div id="filterContainer">
+      <label for="levelFilter">Filter by Level:</label>
+      <select id="levelFilter">
+        <option value="">All Levels</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+      </select>
+    </div>
+
+    <div id="manualInputContainer">
+      <input type="text" id="manualInput" placeholder="Enter journal name or ISSN" />
+      <button id="manualSearchButton">Search</button>
+    </div>
+
+    <div id="historyContainer">
+      <h3>Search History</h3>
+      <!-- History items will be appended here -->
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
